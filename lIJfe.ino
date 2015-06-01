@@ -1,6 +1,5 @@
-
 #include "LedControl.h"
-#include "EEPROM.h"
+//#include <EEPROM.h>
 
 /*
 GAME OF LIFE
@@ -21,7 +20,7 @@ const int EEPROM_ADDRESS_1 = 34;
 const int EEPROM_ADDRESS_2 = 35;
 
 const int RANDOMIZER_ANALOG_PIN = 4;
-const int UNCONNECTED_ANALOG_PIN = 5;
+const int UNCONNECTED_ANALOG_PIN = 3;
 
 const int BAUD_RATE = 9600;
 
@@ -30,31 +29,32 @@ const int BAUD_RATE = 9600;
  */
 //#define USE_EEPROM 1                // uncomment this line to enable eeprom storage
 
-boolean gameBoard[NUMROWS][NUMCOLS] = {
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 1, 1, 0, 0, 0, 0 },
-  { 0, 1, 1, 0, 0, 0, 0, 0 },
-  { 0, 0, 1, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 }
+byte gameboard[] = {
+  B00000000,
+  B00110000,
+  B01100000,
+  B00100000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000
 };
 
-boolean newGameBoard[NUMROWS][NUMCOLS] = {
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 0, 0, 0, 0, 0, 0, 0 },
+byte newgameboard[] = {
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000
 };
+
 
 /////////////////////////////////
 
-byte gameboard[] = {
+byte ij[] = {
   B11000011,
   B11000011,
   B00000000,
@@ -98,12 +98,14 @@ void setup() {
   randomSeed(analogRead(0));
 
   lc.setIntensity(0, 15);
-  setSprite(gameboard);
-  delay(500);
+  setSprite(ij);
+  delay(2000);
   lc.clearDisplay(0);
   
   setUpInitialBoard();
   Serial.println("End setup()\n");
+  setSprite(gameboard);
+  delay(2000);
 }
 
 
@@ -181,7 +183,7 @@ void perturbInitialGameBoard() {
   for (int i=0; i<numChanges; i++) {
     int row = random(0, NUMROWS);
     int col = random(0, NUMCOLS);
-    gameBoard[row][col] = !gameBoard[row][col]; // toggle the led in this position
+    bitWrite(gameboard[row], col, !bitRead(gameboard[row], col)); // toggle the led in this position
   }
 }
 
@@ -189,18 +191,6 @@ void perturbInitialGameBoard() {
  * Loops over all game board positions, and briefly turns on any LEDs for "on" positions.
  */
 void displayGameBoard() {
-  
-  for (int x = 0 ; x < NUMROWS; x++) {
-    byte b = 0;
-    for (int y = 0 ; y < NUMCOLS ; y++) {
-      b = b << 1;
-        if (gameBoard[x,y]) {
-          b |= 1;
-        }
-    }
-    gameboard[x] = b;
-  }
-  
   setSprite(gameboard);
 }
 
@@ -242,7 +232,7 @@ boolean isCellAlive(char row, char col) {
     return false;
   }
 
-  return (gameBoard[row][col] == 1);
+  return (bitRead(gameboard[row], col) == 1);
 }
 
 /**
@@ -254,21 +244,21 @@ void calculateNewGameBoard() {
     for (byte col=0; col<NUMCOLS; col++) {
       byte numNeighbors = countNeighbors(row, col);
 
-      if (gameBoard[row][col] && numNeighbors < 2) {
+      if (bitRead(gameboard[row], col) && numNeighbors < 2) {
         // Any live cell with fewer than two live neighbours dies, as if caused by under-population.
-        newGameBoard[row][col] = false;
-      } else if (gameBoard[row][col] && (numNeighbors == 2 || numNeighbors == 3)) {
+        bitClear(newgameboard[row], col);
+      } else if (bitRead(gameboard[row], col) && (numNeighbors == 2 || numNeighbors == 3)) {
         // Any live cell with two or three live neighbours lives on to the next generation.
-        newGameBoard[row][col] = true;
-      } else if (gameBoard[row][col] && numNeighbors > 3) {
+        bitSet(newgameboard[row], col);
+      } else if (bitRead(gameboard[row], col) && numNeighbors > 3) {
         // Any live cell with more than three live neighbours dies, as if by overcrowding.
-        newGameBoard[row][col] = false;
-      } else if (!gameBoard[row][col] && numNeighbors == 3) {
+        bitClear(newgameboard[row], col);
+      } else if (!bitRead(gameboard[row], col) && numNeighbors == 3) {
         // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-        newGameBoard[row][col] = true;
+        bitSet(newgameboard[row], col);
       } else {
         // All other cells will remain off
-        newGameBoard[row][col] = false;
+        bitClear(newgameboard[row], col);
       }
     }
   }
@@ -279,9 +269,7 @@ void calculateNewGameBoard() {
  */
 void swapGameBoards() {
   for (byte row=0; row<NUMROWS; row++) {
-    for (byte col=0; col<NUMCOLS; col++) {
-      gameBoard[row][col] = newGameBoard[row][col];
-    }
+    gameboard[row] = newgameboard[row];
   }
 }
 
