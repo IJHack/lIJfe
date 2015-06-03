@@ -126,7 +126,7 @@ void loop() {
   do {
     displayGameBoard();
   }
-  while (millis() < time + 250);
+  while (millis() < time + 333);
 
   // Calculate the next iteration
   calculateNewGameBoard();
@@ -202,15 +202,6 @@ void perturbInitialGameBoard() {
  */
 void displayGameBoard() {
   setSprite(gameboard);
-}
-
-/**
- * Turns on the specified LED for a v. short period of time
- */
-void pulseLed(byte row, byte col) {
-  setLedOn(row, col);
-  delayMicroseconds(MICROS);
-  setLedOff(row, col);
 }
 
 /**
@@ -303,13 +294,5 @@ void swapGameBoards() {
         setUpInitialBoard();
         setSprite(gameboard);
   }
-}
-
-
-void setLedOn(byte row, byte col) {
-  lc.setLed(0, row, col, HIGH);
-}
-void setLedOff(byte row, byte col) {
-  lc.setLed(0, row, col, LOW);
 }
 
