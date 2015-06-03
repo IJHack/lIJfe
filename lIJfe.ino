@@ -1,5 +1,5 @@
 #include "LedControl.h"
-//#include <EEPROM.h>
+#include <avr/EEPROM.h>
 
 /*
 GAME OF LIFE
@@ -87,7 +87,6 @@ void setSprite(byte *sprite) {
   }
 }
 
-
 void setup() {
   // The MAX72XX is in power-saving mode on startup,
   // we have to do a wakeup call
@@ -114,7 +113,7 @@ void setup() {
   
   setUpInitialBoard();
   Serial.println("End setup()\n");
-  setSprite(gameboard);
+  displayGameBoard();
   delay(2000);
 }
 
@@ -123,10 +122,8 @@ void loop() {
   long time = millis();
 
   // Display the current game board for approx. 250ms
-  do {
-    displayGameBoard();
-  }
-  while (millis() < time + 333);
+  displayGameBoard();
+  delay(333);
 
   // Calculate the next iteration
   calculateNewGameBoard();
