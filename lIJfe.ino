@@ -51,6 +51,16 @@ byte newgameboard[] = {
   B00000000
 };
 
+byte oldgameboard[] = {
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000,
+  B00000000
+};
 
 /////////////////////////////////
 
@@ -268,8 +278,30 @@ void calculateNewGameBoard() {
  * Copies the data from the new game board into the current game board array
  */
 void swapGameBoards() {
+  bool stable = true;
+  bool dead = true;
+  bool repeat = true;
   for (byte row=0; row<NUMROWS; row++) {
+    if (gameboard[row] != newgameboard[row]) {
+      stable  = false;
+    }
+    if (gameboard[row] != 0) {
+      dead = false;
+    }
+    if (oldgameboard[row] != newgameboard[row]) {
+      repeat = false;
+    }
+    oldgameboard[row] = gameboard[row];
     gameboard[row] = newgameboard[row];
+  }
+  if (dead) {
+        setSprite(ij);
+        delay(1000);
+  }
+  if (stable || repeat) {
+        delay(2000);
+        setUpInitialBoard();
+        setSprite(gameboard);
   }
 }
 
